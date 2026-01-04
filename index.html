@@ -6,73 +6,20 @@
   <title>Join TechPathHabesha</title>
 
   <style>
-    body {
-      margin: 0;
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial;
-      background: #ffffff;
-      color: #111;
-    }
-
-    .container {
-      max-width: 520px;
-      margin: 0 auto;
-      padding: 56px 20px;
-    }
-
-    h1 {
-      font-size: 32px;
-      margin-bottom: 10px;
-    }
-
-    p {
-      color: #555;
-      margin-bottom: 32px;
-      line-height: 1.6;
-    }
-
-    label {
-      display: block;
-      font-size: 14px;
-      margin-bottom: 6px;
-      margin-top: 18px;
-    }
-
-    input, select {
-      width: 100%;
-      padding: 12px;
-      font-size: 14px;
-      border-radius: 10px;
-      border: 1px solid #d1d5db;
-    }
-
-    input:focus, select:focus {
-      outline: none;
-      border-color: #000;
-    }
-
-    button {
-      margin-top: 28px;
-      width: 100%;
-      padding: 16px;
-      border-radius: 14px;
-      border: none;
-      background: #000;
-      color: #fff;
-      font-size: 16px;
-      font-weight: 600;
-      cursor: pointer;
-    }
-
-    button:hover {
-      opacity: 0.9;
-    }
-
-    .note {
-      margin-top: 16px;
-      font-size: 13px;
-      color: #777;
-      text-align: center;
-    }
+    body { margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial; background: #fff; color: #111; }
+    .container { max-width: 520px; margin: 0 auto; padding: 56px 20px; }
+    h1 { font-size: 32px; margin-bottom: 10px; }
+    p { color: #555; margin-bottom: 32px; line-height: 1.6; }
+    label { display: block; font-size: 14px; margin-bottom: 6px; margin-top: 18px; }
+    input, select { width: 100%; padding: 12px; font-size: 14px; border-radius: 10px; border: 1px solid #d1d5db; }
+    input:focus, select:focus { outline: none; border-color: #000; }
+    button { margin-top: 28px; width: 100%; padding: 16px; border-radius: 14px; border: none; background: #000; color: #fff; font-size: 16px; font-weight: 600; cursor: pointer; }
+    button:hover { opacity: 0.9; }
+    button:disabled { opacity: 0.6; cursor: not-allowed; }
+    .note { margin-top: 16px; font-size: 13px; color: #777; text-align: center; }
+    .msg { margin-top: 14px; padding: 12px; border-radius: 10px; font-size: 13px; display:none; }
+    .ok { background:#ecfdf5; color:#065f46; border:1px solid #a7f3d0; }
+    .err { background:#fef2f2; color:#991b1b; border:1px solid #fecaca; }
   </style>
 </head>
 
@@ -85,15 +32,15 @@
       Fill out the short form below to join.
     </p>
 
-    <form>
+    <form id="joinForm">
       <label>Full Name</label>
-      <input type="text" placeholder="" required />
+      <input id="fullName" type="text" placeholder="Natinael Abebe" required />
 
       <label>Email Address</label>
-      <input type="email" placeholder="you@email.com" required />
+      <input id="email" type="email" placeholder="you@email.com" required />
 
       <label>Current Status</label>
-      <select required>
+      <select id="status" required>
         <option value="">Select one</option>
         <option>Student</option>
         <option>Career switcher</option>
@@ -102,7 +49,7 @@
       </select>
 
       <label>Main Interest</label>
-      <select required>
+      <select id="interest" required>
         <option value="">Select one</option>
         <option>Software Engineering</option>
         <option>Data / AI</option>
@@ -112,7 +59,7 @@
       </select>
 
       <label>How did you hear about us?</label>
-      <select>
+      <select id="referral">
         <option value="">Optional</option>
         <option>YouTube</option>
         <option>TikTok</option>
@@ -124,14 +71,70 @@
       </select>
 
       <label>Telegram Username (optional)</label>
-      <input type="text" placeholder="@username" />
+      <input id="telegram" type="text" placeholder="@username" />
 
-      <button type="submit">Join the community</button>
+      <button id="submitBtn" type="submit">Join the community</button>
+
+      <div id="msg" class="msg"></div>
     </form>
 
     <div class="note">
       No spam. Just community, resources, and opportunities.
     </div>
   </div>
+
+  <script>
+    // ✅ Your Apps Script Web App endpoint
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzZYN4braaYPee0FaDHqh1LCsYlYcNDIpav_BJlpSbB9UIFOus-BBp3TgzG8uK3ywjt/exec";
+
+    const form = document.getElementById("joinForm");
+    const msg = document.getElementById("msg");
+    const submitBtn = document.getElementById("submitBtn");
+
+    function show(type, text) {
+      msg.className = "msg " + type; // ok | err
+      msg.textContent = text;
+      msg.style.display = "block";
+    }
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      msg.style.display = "none";
+
+      const payload = {
+        fullName: document.getElementById("fullName").value.trim(),
+        email: document.getElementById("email").value.trim(),
+        status: document.getElementById("status").value,
+        interest: document.getElementById("interest").value,
+        referral: document.getElementById("referral").value,
+        telegram: document.getElementById("telegram").value.trim()
+      };
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Submitting...";
+
+      try {
+        const res = await fetch(SCRIPT_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await res.json().catch(() => ({}));
+
+        if (data.ok) {
+          form.reset();
+          show("ok", "✅ Submitted! You’re in. We’ll reach out soon.");
+        } else {
+          show("err", "❌ Submission failed: " + (data.error || "Unknown error"));
+        }
+      } catch (err) {
+        show("err", "❌ Network error. Check your Apps Script deployment access.");
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = "Join the community";
+      }
+    });
+  </script>
 </body>
 </html>
